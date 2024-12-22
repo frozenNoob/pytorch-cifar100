@@ -1,3 +1,8 @@
+# 期末项目论文，基于XGBoost和改进的ResNet18算法进行图像分类
+所用数据集为cifar-100
+
+
+# 以下为代码来源的介绍
 # Pytorch-cifar100
 
 practice on cifar100 using pytorch
