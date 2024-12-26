@@ -29,6 +29,12 @@ if __name__ == '__main__':
     parser.add_argument('-b', type=int, default=16, help='batch size for dataloader')
     args = parser.parse_args()
 
+    # 固定各种随机种子
+    torch.manual_seed(42)
+    XGBoostSeed = 42
+    # random.seed(42)
+    # np.random.seed(42)
+
     net = get_network(args)
 
     cifar100_test_loader = get_test_dataloader(
@@ -43,6 +49,13 @@ if __name__ == '__main__':
     else:
         net.load_state_dict(torch.load(args.weights, map_location='cpu'))
     print(net)
+    '''
+    该代码用在测试模块中
+    主要作用：
+    在评估模式下，模型禁用了一些训练时的特定功能（Batch Normalization 和 Dropout）。
+    此时pytorch会自动把BN和DropOut固定住，不会取平均(更新)，而是用训练好的值。
+    不然的话，一旦test的batch_size过小，很容易就会因BN层导致模型performance损失较大；
+    '''
     net.eval()
 
     correct_1 = 0.0
@@ -90,7 +103,7 @@ if __name__ == '__main__':
             output = net(image)
             _, pred = output.topk(5, 1, largest=True, sorted=True)  # 从大到小并且排序，k=5,dim=1,当k=1时和下面那个max函数一个作用
 
-            # 打印前十个测试结果和真实结果进行对比
+            # 测试结果和真实结果进行对比
             # pred_y = torch.max(output, 1)[1].numpy()
             # print('*' * 10)
             # 记得（B,C,H,W)
@@ -102,11 +115,8 @@ if __name__ == '__main__':
             #
             # print(label, f'real index: {label.shape}')
             # print(pred, f'prediction index1: {pred.shape}')
-            ##  这里index1和index2理论上应该是对得上（index2是5个index1中最大的一个)，但是实际上没对上，原因未知
-            # print(pred_y, f'prediction index2{pred_y.shape}')
-            # print('*' * 10)
 
-            label = label.view(label.size(0), -1).expand_as(pred)
+            label = label.view(label.size(0), -1).expand_as(pred)  # 从(16,)变为(16,5),其中一行元素全都相同，方便对比预测值
             correct = pred.eq(label).float()
             # compute top 5
             correct_5 += correct[:, :5].sum()
@@ -118,8 +128,20 @@ if __name__ == '__main__':
         print(torch.cuda.memory_summary(), end='')
 
     print("result is as follows:")
+    best_accuracy = correct_1 / len(cifar100_test_loader.dataset)
     print(f"The best accuracy is {best_accuracy}")
-    print(f"The average accuracy is {correct_1 / len(cifar100_test_loader.dataset)}")
-    print("Top 1 err: ", 1 - correct_1 / len(cifar100_test_loader.dataset))
-    print("Top 5 err: ", 1 - correct_5 / len(cifar100_test_loader.dataset))
+    print("Top 1 err: ", 1 - best_accuracy)  # 累计10000条测试数据的偏差，给1次猜测机会
+    print("Top 5 err: ", 1 - correct_5 / len(cifar100_test_loader.dataset))  # 20个大类，每个大类中有5个相似的小类别，所以给了5次猜测的机会
+
+    '''
+    执行
+    for p in net.parameters():
+        print('这是', p.shape)
+    卷积层的部分结果如下：
+    这是 torch.Size([64, 3, 3, 3])
+    这是 torch.Size([64])
+    这是 torch.Size([64])
+    
+    由此可以看出，这里参数指的是卷积核的w和b（设置bias=False,所以没有b）以及归一化层的均值和方差,    
+    '''
     print("Parameter numbers: {}".format(sum(p.numel() for p in net.parameters())))

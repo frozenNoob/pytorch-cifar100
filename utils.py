@@ -48,7 +48,8 @@ def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=Tru
         batch_size: dataloader batchsize
         num_workers: dataloader num_works
         shuffle: whether to shuffle
-    Returns: train_data_loader:torch dataloader object
+    Returns:
+        train_data_loader:torch dataloader object
     """
 
     transform_train = transforms.Compose([

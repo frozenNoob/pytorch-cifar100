@@ -114,6 +114,7 @@ class improvedResNet(nn.Module):
         output = self.conv3_x(output)
         output = self.conv4_x(output)
         output = self.conv5_x(output)
+        # print("此时的形状为：", output.shape) # 特征图的H和W此时都为4,与理论一致
         output = self.avg_pool(output)
         output = output.view(output.size(0), -1)
         output = self.fc(output)

@@ -118,14 +118,14 @@ def eval_training(epoch=0, tb=True):
     return float(correct / len(cifar100_test_loader.dataset))
 
 
-def draw_picture_of_acc_epoch(acc: list):
-    epoch = [i for i in range(1, len(acc)+1)]
+def draw_picture_of_acc_epoch(acc: list, name: str):
+    epoch = [i for i in range(1, len(acc) + 1)]
     plt.xlabel('epoch')
     plt.ylabel('accuracy')
     plt.plot(epoch, acc, 'r*-')
     # 保存图形为.png文件
-    plt.savefig('picture_of_acc_epoch.png')
-    print('save picture_of_acc_epoch.png')
+    plt.savefig(name + '_picture_of_acc_epoch.png')
+    print(name + '_save picture_of_acc_epoch.png')
     # plt.show()
 
 
@@ -143,6 +143,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # 固定各种随机种子
+    torch.manual_seed(42)
+    XGBoostSeed = 42
+    # random.seed(42)
+    # np.random.seed(42)
+
     net = get_network(args)
 
     # data preprocessing:
@@ -153,6 +159,11 @@ if __name__ == '__main__':
         batch_size=args.b,
         shuffle=True
     )
+    # 设置num_workers：
+    # 每次dataloader加载数据时：dataloader一次性创建num_worker个worker，（也可以说dataloader一次性创建num_worker个工作进程，worker也是普通的工作进程），
+    # 并用batch_sampler将指定batch分配给指定worker，worker将它负责的batch加载进RAM。RAM属于内存。
+    # 一般开始是将num_workers设置为等于计算机上的CPU数量
+    # 最好的办法是缓慢增加num_workers，直到训练速度不再提高，就停止增加num_workers的值。
 
     cifar100_test_loader = get_test_dataloader(
         settings.CIFAR100_TRAIN_MEAN,
@@ -162,11 +173,13 @@ if __name__ == '__main__':
         shuffle=True
     )
 
-    loss_function = nn.CrossEntropyLoss()
+    loss_function = nn.CrossEntropyLoss() # 该函数算交叉熵时自带softmax层。等效于softmax->log(计算对数）->nn.NLLLoss()（负对数似然损失)
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    # 在训练过程中，通过逐步降低学习率，可以使模型在训练的后期更加稳定地收敛到最优解，避免训练过程中出现震荡或者无法收敛的情况。
     train_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=settings.MILESTONES,
                                                      gamma=0.2)  # learning rate decay
     iter_per_epoch = len(cifar100_training_loader)
+    # 热身，为了调整学习率等等
     warmup_scheduler = WarmUpLR(optimizer, iter_per_epoch * args.warm)
 
     if args.resume:
@@ -195,7 +208,7 @@ if __name__ == '__main__':
     # create checkpoint folder to save model
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
-    checkpoint_path = os.path.join(checkpoint_path, '{net}-{epoch}-{type}.pth')
+    checkpoint_path = os.path.join(checkpoint_path, '{net}-{epoch}-{type}.pth')  # 规定好参数的保存路径格式
 
     best_acc = 0.0
     if args.resume:
@@ -244,4 +257,4 @@ if __name__ == '__main__':
     writer.close()
     all_end_time = time.time()
     print(f'总用时为{round(all_end_time - all_start_time, 3)}s')
-    draw_picture_of_acc_epoch(accuracy_list)
+    draw_picture_of_acc_epoch(accuracy_list, args.net)
