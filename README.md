@@ -42,34 +42,42 @@ pip install cupy-cuda117
 
 **这里用学校的GPU平台，但是安装cupy-cuda117库下到一半就timeout了，所以实际上训练和测试XGBoost时就不用`-gpu`选项了**
 
-## 实验结果
-
-以下是在Epoch=200时的训练结果，事实上，在100代左右就已经收敛了。
-
-|           net            | accuracy |
-|:------------------------:|:--------:|
-|         ResNet18         |  61.67%  |
-|    ResNet18 + XGBoost    |    2     |
-|     improvedResNet18     |  60.91%  |
-| improvedResNet18+XGBoost |    2     |
-
 # 实验结果分析
+
+以下是在Epoch=200时的训练结果，事实上，在100代左右就已经收敛了。设置优化器为SGD，携带**momentum**以对梯度下降法起到加速的作用，携带 **L2 正则化项**以防止过拟合，使用学习率调度器 `MultiStepLR`以在训练过程的固定节点使学习率衰减，通过逐步降低学习率，可以使模型在训练的后期更加稳定地收敛到最优解，避免训练过程中出现震荡或者无法收敛的情况。
+
+## 结果1分析
+
+|          model           | accuracy | top1<br>error | top5<br>error |
+| :----------------------: | :------: | ------------- | ------------- |
+|         ResNet18         |  64.06%  | 0.3594        | 0.1197        |
+|    ResNet18 + XGBoost    |  65.02%  | 0.3498        | 0.1124        |
+|     improvedResNet18     |  65.07%  | 0.3493        | 0.1102        |
+| improvedResNet18+XGBoost |  66.63%  | 0.3337        | 0.1024        |
+
+可以看出携带了XGBoost算法后，ResNet18得出的准确率上升了**0.96%**，improvedResNet18得出的准确率上升了**1.56%**。由此看出，XGBoost算法能够识别一些传统CNN仅用概率大小判断错误的样本，从而使携带了XGBoost算法的CNN模型在测试集上有更好的表现。
+
+## 结果2分析
 
 ResNet18对比improvedResNet18的结果如下：
 
-|       net        | accuracy | Parameter quantity |
+|      model       | accuracy | Parameter quantity |
 | :--------------: | :------: | :----------------: |
-|     ResNet18     |  61.67%  | $1.12\times 10^7$  |
-| improvedResNet18 |  60.91%  | $5.65\times 10^6$  |
+|     ResNet18     |  64.06%  | $1.12\times 10^7$  |
+| improvedResNet18 |  65.07%  | $5.65\times 10^6$  |
 
-可以看出，虽然改进后的残差网络`improvedResNet18`比改进前的`ResNet18` 降低了0.76%的准确率，但是节省了大约一半的参数量，由此明显加快了训练和测试的速度。
+可以看出，改进后的残差网络`improvedResNet18`比改进前的`ResNet18` 准确率提高了**1.01%**，并且**节省了大约一半的参数量**，从而减少训练时间和模型推理的计算成本。准确率提高的原因可能是减少参数量可以起到正则化的效果。这有助于降低模型的复杂性，从而减弱过拟合的程度。在这种情况下，模型能够更好地泛化到未见过的数据，从而提高测试集上的准确率。这也体现了在某些任务中，使用更小的模型可能更合适。因为过大的模型可能会干扰学习过程，而较小的模型能够专注于学习最重要的特征。
+
+这里的参数量指的是卷积核的weight和bias、全连接层的weight和bias、标准化（比如BN）的均值和方差的累计个数。
+
+
 
 # 附录一：训练模型
 
-## 1、先训练CNN模型
+## 1、训练CNN模型
 
 ```bash
-python train.py -net resnet18 -gpu
+python train.py -net resnet18 -gpu -b 400
 ```
 
 从之前的训练中继续训练（通过根据文件名加载之前的最新的参数文件）
@@ -81,10 +89,10 @@ python train.py -net resnet18 -gpu -resume
 ## 2、再使用训练好的CNN模型来输出特征向量用作XGBoost的数据集
 
 ```bash
-python models/XGBoost.py -net resnet18 -b 500 -weights ./checkpoint/resnet18/Monday_23_December_2024_04h_08m_03s/resnet18-86-best.pth -gpu
+python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth
 ```
 
-
+更加详细的可以参考附录二的"best b) 有XGBoost" 部分
 
 ## XGBoost的超参数调整
 
@@ -92,7 +100,13 @@ python models/XGBoost.py -net resnet18 -b 500 -weights ./checkpoint/resnet18/Mon
 
 [【转】XGBoost参数调优完全指南（附Python代码） - 知乎](https://zhuanlan.zhihu.com/p/29649128)
 
-# 附录二：测试已经保存的最佳模型：
+[【通俗易懂】XGBoost从入门到实战，非常详细 - 知乎](https://zhuanlan.zhihu.com/p/258564378)
+
+[XGBoost系列3——XGBoost在多分类问题中的应用_xgboost多分类-CSDN博客](https://blog.csdn.net/qq_41780234/article/details/135684409)
+
+[XGBoost森林构造原理及多棵树构造示例-CSDN博客](https://blog.csdn.net/tterminator/article/details/110494340)
+
+# 附录二：测试已经保存的CNN最佳模型和训练并测试XGBoost模型：
 
 ## resNet18: 
 
@@ -100,11 +114,25 @@ python models/XGBoost.py -net resnet18 -b 500 -weights ./checkpoint/resnet18/Mon
 
 ### best
 
+#### a) 无XGBoost
+
 ```bash
-python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2024_04h_08m_03s/resnet18-86-best.pth -gpu
+python test.py -net resnet18 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth -gpu
 ```
 
-![image-20241225220835515](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241225220835515.png)
+![image-20241227150343999](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227150343999.png)
+
+#### b) 有XGBoost
+
+**训练完XGBoost模型便直接测试了**
+
+```bash
+python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth
+```
+
+
+
+![image-20241227153256918](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227153256918.png)
 
 ### regular(定期的，正常的每隔几代保存)
 
@@ -120,13 +148,25 @@ python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2
 
 ### best
 
+#### a) 无XGBoost
+
 ```bash
-python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Monday_23_December_2024_02h_29m_02s/improvedResNet18-74-best.pth -gpu
+python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth -gpu
 ```
 
-![image-20241225221025541](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241225221025541.png)
+![image-20241227164348901](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227164348901.png)
+
+#### b) 有XGBoost
+
+```
+python models/XGBoost.py -net improvedResNet18 -b 400 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth
+```
+
+![image-20241227172036692](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227172036692.png)
 
 ### regular(定期的，正常的每隔几代保存)
+
+**这里只测试残差网络**
 
 ```bash
 python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Monday_23_December_2024_02h_29m_02s/improvedResNet18-200-regular.pth -gpu

@@ -6,7 +6,7 @@ import random
 import sys
 import os
 # 如果报自己定义的模块报错module not found，则加入这句
-# sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())
 """ 训练XGBoost
 """
 
@@ -103,10 +103,10 @@ def train():
         params1 = {
             'tree_method': 'exact',  #
             # XGBoost最后会进行softmax，输出概率最大的下标/标签,而非multi:softprob输出概率矩阵
-            'objective': 'multi:softmax',  # 多分类问题,必须得指定这些参数，不然得出的predict会为小数导致十分的不准确
+            'objective': 'multi:softprob',  # 多分类问题,必须得指定这些参数，不然得出的predict会为小数导致十分的不准确
             'num_class': 100,  # 类别数,
             'seed': XGBoostSeed,
-            'eta': 0.05
+            'eta': 0.1
         }
 
         dtrain = xgb.DMatrix(images, label=labels)
@@ -143,8 +143,8 @@ def train():
 def test():
     '''测试XGBoost模型
     '''
+    correct_1, correct_5 = 0, 0
     # 测试模型
-    equal_count = 0
     for n_iter, (images, labels) in enumerate(cifar100_test_loader):
         print("iteration: {}\ttotal {} iterations".format(n_iter + 1, len(cifar100_test_loader)))
         if args.gpu:
@@ -157,17 +157,27 @@ def test():
         y_pred = model_XGBoost.predict(images)
 
         # 计算准确率
-        for i in range(len(labels)):
-            if labels[i] == y_pred[i]:
-                equal_count += 1
+        y_pred = torch.tensor(y_pred)
+        _, y_pred = y_pred.topk(5, 1, largest=True, sorted=True)  # 从大到小并且排序，k=5,dim=1
+        labels = labels.view(labels.size(0), -1).expand_as(y_pred)  # 从(16,)变为(16,5),其中一行元素全都相同，方便对比预测值
+        correct = y_pred.eq(labels).float()
+        # compute top 5
+        correct_5 += correct[:, :5].sum()
+        # compute top1
+        correct_1 += correct[:, :1].sum()
+    print("result is as follows:")
+    best_accuracy = correct_1 / len(cifar100_test_loader.dataset)
+    print(f"The best accuracy is {best_accuracy}")
+    print("Top 1 err: ", 1 - best_accuracy)  # 累计10000条测试数据的偏差，给1次猜测机会
+    print("Top 5 err: ", 1 - correct_5 / len(cifar100_test_loader.dataset))  # 20个大类，每个大类中有5个相似的小类别，所以给了5次猜测的机会
+
     print("此时XGBoost的森林如下")
     print("-+-" * 25)
     print(f"当前树有 {len(model_XGBoost.get_dump())} 棵")
     # 查看每棵树的具体节点
     # for leaf in model_XGBoost.get_dump():
     #     print(leaf)
-    # print("-+-" * 25)
-    print("Accuracy:", equal_count / len(cifar100_test_loader.dataset))
+    print("-+-" * 25)
 
 
 if __name__ == '__main__':
