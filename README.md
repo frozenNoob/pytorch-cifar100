@@ -46,6 +46,8 @@ pip install cupy-cuda117
 
 以下是在Epoch=200时的训练结果，事实上，在100代左右就已经收敛了。设置优化器为SGD，携带**momentum**以对梯度下降法起到加速的作用，携带 **L2 正则化项**以防止过拟合，使用学习率调度器 `MultiStepLR`以在训练过程的固定节点使学习率衰减，通过逐步降低学习率，可以使模型在训练的后期更加稳定地收敛到最优解，避免训练过程中出现震荡或者无法收敛的情况。
 
+事实上，批次大小设置为400是因为如果不这么设置，会出现`CNN前向传播时`爆内存以及`XGBoost构造树时`爆内存的情况。
+
 ## 结果1分析
 
 |          model           | accuracy | top1<br>error | top5<br>error |
@@ -86,13 +88,19 @@ python train.py -net resnet18 -gpu -b 400
 python train.py -net resnet18 -gpu -resume
 ```
 
+`improvedResNet18`采用相同方法：
+
+```bash
+python train.py -net improvedResNet18 -gpu -b 400
+```
+
 ## 2、再使用训练好的CNN模型来输出特征向量用作XGBoost的数据集
 
 ```bash
 python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth
 ```
 
-更加详细的可以参考附录二的"best b) 有XGBoost" 部分
+更加详细的可以参考附录二的`best b) 有XGBoost` 部分
 
 ## XGBoost的超参数调整
 
@@ -110,7 +118,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 
 ## resNet18: 
 
-下面2个文件大小都大约为43 MB
+下面2个文件大小都大约为**43 MB**
 
 ### best
 
@@ -120,7 +128,9 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 python test.py -net resnet18 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth -gpu
 ```
 
-![image-20241227150343999](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227150343999.png)
+![image-20241227150343999](.\assets\image-20241227150343999.png)
+
+
 
 #### b) 有XGBoost
 
@@ -132,7 +142,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 
 
 
-![image-20241227153256918](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227153256918.png)
+![image-20241227153256918](.\assets\image-20241227153256918.png)
 
 ### regular(定期的，正常的每隔几代保存)
 
@@ -140,7 +150,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2024_04h_08m_03s/resnet18-200-regular.pth -gpu
 ```
 
-![image-20241225220908208](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241225220908208.png)
+![image-20241225220908208](.\assets\image-20241225220908208.png)
 
 ## improvedRestNet18
 
@@ -154,7 +164,7 @@ python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2
 python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth -gpu
 ```
 
-![image-20241227164348901](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227164348901.png)
+![image-20241227164348901](.\assets\image-20241227164348901.png)
 
 #### b) 有XGBoost
 
@@ -162,7 +172,7 @@ python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Frid
 python models/XGBoost.py -net improvedResNet18 -b 400 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth
 ```
 
-![image-20241227172036692](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241227172036692.png)
+![image-20241227172036692](.\assets\image-20241227172036692.png)
 
 ### regular(定期的，正常的每隔几代保存)
 
@@ -172,7 +182,7 @@ python models/XGBoost.py -net improvedResNet18 -b 400 -weights ./checkpoint/impr
 python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Monday_23_December_2024_02h_29m_02s/improvedResNet18-200-regular.pth -gpu
 ```
 
-![image-20241225221137918](C:\Users\WB\AppData\Roaming\Typora\typora-user-images\image-20241225221137918.png)
+![image-20250111140516269](.\assets\image-20250111140516269.png)
 
 
 
