@@ -128,7 +128,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 python test.py -net resnet18 -weights ./checkpoint/resnet18/Friday_27_December_2024_05h_46m_11s/resnet18-49-best.pth -gpu
 ```
 
-![image-20241227150343999](.\assets\image-20241227150343999.png)
+![image-20241227150343999](assets/image-20241227150343999.png)
 
 
 
@@ -142,7 +142,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 
 
 
-![image-20241227153256918](.\assets\image-20241227153256918.png)
+![image-20241227153256918](assets/image-20241227153256918.png)
 
 ### regular(定期的，正常的每隔几代保存)
 
@@ -150,7 +150,7 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2024_04h_08m_03s/resnet18-200-regular.pth -gpu
 ```
 
-![image-20241225220908208](.\assets\image-20241225220908208.png)
+![image-20241225220908208](assets/image-20241225220908208.png)
 
 ## improvedRestNet18
 
@@ -164,7 +164,7 @@ python test.py -net resnet18 -weights ./checkpoint/resnet18/Monday_23_December_2
 python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth -gpu
 ```
 
-![image-20241227164348901](.\assets\image-20241227164348901.png)
+![image-20241227164348901](assets/image-20241227164348901.png)
 
 #### b) 有XGBoost
 
@@ -172,7 +172,7 @@ python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Frid
 python models/XGBoost.py -net improvedResNet18 -b 400 -weights ./checkpoint/improvedResNet18/Friday_27_December_2024_07h_39m_55s/improvedResNet18-168-best.pth
 ```
 
-![image-20241227172036692](.\assets\image-20241227172036692.png)
+![image-20241227172036692](assets/image-20241227172036692.png)
 
 ### regular(定期的，正常的每隔几代保存)
 
@@ -182,7 +182,7 @@ python models/XGBoost.py -net improvedResNet18 -b 400 -weights ./checkpoint/impr
 python test.py -net improvedResNet18 -weights ./checkpoint/improvedResNet18/Monday_23_December_2024_02h_29m_02s/improvedResNet18-200-regular.pth -gpu
 ```
 
-![image-20250111140516269](.\assets\image-20250111140516269.png)
+![image-20250111140516269](assets/image-20250111140516269.png)
 
 
 
