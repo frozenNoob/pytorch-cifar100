@@ -6,17 +6,33 @@
 
 - 2024-12-26，新增XGBoost算法并结合改进残差网络。
 
+
+
+## 改进点
+
+### 1. 改进的残差网络
+##### 1) 主要改进部分
+![网络部分对比](assets/网络部分对比.svg)
+
+##### 2) 总体对比图
+![总体对比图](assets/改进网络图.svg)
+
+
+
+### 2.融合XGBoost算法
+
+![merge XGBoost Flowchart](assets/流程图.svg)
 ## 实验环境
 
-python 3.10
+- python 3.10
 
-pytorch2.0.0+cuda11.7
+- pytorch2.0.0+cuda11.7
 
-tensorboard 2.11.0
+- tensorboard 2.11.0
 
-xgboost 2.1.3
+- xgboost 2.1.3
 
-cupy-cuda117
+- cupy-cuda117
 
 ## conda环境配置
 
@@ -104,15 +120,10 @@ python models/XGBoost.py -net resnet18 -b 400 -weights ./checkpoint/resnet18/Fri
 
 ## XGBoost的超参数调整
 
-参考
-
-[【转】XGBoost参数调优完全指南（附Python代码） - 知乎](https://zhuanlan.zhihu.com/p/29649128)
-
-[【通俗易懂】XGBoost从入门到实战，非常详细 - 知乎](https://zhuanlan.zhihu.com/p/258564378)
-
-[XGBoost系列3——XGBoost在多分类问题中的应用_xgboost多分类-CSDN博客](https://blog.csdn.net/qq_41780234/article/details/135684409)
-
-[XGBoost森林构造原理及多棵树构造示例-CSDN博客](https://blog.csdn.net/tterminator/article/details/110494340)
+>1. [【转】XGBoost参数调优完全指南（附Python代码） - 知乎](https://zhuanlan.zhihu.com/p/29649128)
+>2. [【通俗易懂】XGBoost从入门到实战，非常详细 ](https://zhuanlan.zhihu.com/p/258564378)
+>3. [XGBoost系列3——XGBoost在多分类问题中的应用_xgboost多分类-CSDN博客](https://blog.csdn.net/qq_41780234/article/details/135684409)
+>4. [XGBoost森林构造原理及多棵树构造示例-CSDN博客](https://blog.csdn.net/tterminator/article/details/110494340)
 
 # 附录二：测试已经保存的CNN最佳模型和训练并测试XGBoost模型：
 
